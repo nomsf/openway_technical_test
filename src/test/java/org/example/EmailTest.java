@@ -47,29 +47,29 @@ public class EmailTest {
         driver.findElement(By.xpath("//*[@id=\"passwordNext\"]/div/button")).click();
     }
 
-//    @Test(dependsOnMethods = {"Login"})
-//    public void DeleteUnreadEmailHover(){
-//        WebElement searchBar = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"gs_lc50\"]/input[1]")));
-//        searchBar.sendKeys("is:unread");
-////        driver.findElement(By.xpath("//*[@id=\"gs_lc50\"]/input[1]")).sendKeys("is:unread");
-//        driver.findElement(By.xpath("//*[@id=\"aso_search_form_anchor\"]/button[4]")).click();
+    @Test(dependsOnMethods = {"Login"})
+    public void DeleteUnreadEmailHover(){
+        WebElement searchBar = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"gs_lc50\"]/input[1]")));
+        searchBar.sendKeys("is:unread");
+//        driver.findElement(By.xpath("//*[@id=\"gs_lc50\"]/input[1]")).sendKeys("is:unread");
+        driver.findElement(By.xpath("//*[@id=\"aso_search_form_anchor\"]/button[4]")).click();
+
+        WebElement emails = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//table[@class='F cf zt']/tbody")));
+//        WebElement emails = driver.findElement(By.xpath("//*[@id=\":21\"]/tbody"));
 //
-//        WebElement emails = wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//table[@class='F cf zt']/tbody")));
-////        WebElement emails = driver.findElement(By.xpath("//*[@id=\":21\"]/tbody"));
-////
-//        // Delete First Unread Email
-//        Actions actions = new Actions(driver);
-//        WebElement email = wait.until(ExpectedConditions.visibilityOfNestedElementsLocatedBy(emails, By.xpath(".//tr"))).get(0);
-////        WebElement email = emails.findElement(By.xpath(".//tr"));
-//        String emailSubject = email.findElement(By.className("bqe")).getText();
-//        actions.moveToElement(email).perform();
-//        email.findElement(By.className("bqX bru")).click();
-//
-//        // Check if email still there
-//        email = emails.findElement(By.xpath(".//tr"));
-//        String emailSubjectNew = email.findElement(By.className("bqe")).getText();
-//        Assert.assertNotEquals(emailSubjectNew, emailSubject, "The email is not deleted");
-//    }
+        // Delete First Unread Email
+        Actions actions = new Actions(driver);
+        WebElement email = wait.until(ExpectedConditions.visibilityOfNestedElementsLocatedBy(emails, By.xpath(".//tr"))).get(0);
+//        WebElement email = emails.findElement(By.xpath(".//tr"));
+        String emailSubject = email.findElement(By.className("bqe")).getText();
+        actions.moveToElement(email).perform();
+        email.findElement(By.className("bqX bru")).click();
+
+        // Check if email still there
+        email = emails.findElement(By.xpath(".//tr"));
+        String emailSubjectNew = email.findElement(By.className("bqe")).getText();
+        Assert.assertNotEquals(emailSubjectNew, emailSubject, "The email is not deleted");
+    }
 
     @Test(dependsOnMethods = {"Login"})
     public void DeleteAllUnreadEmailSelect(){
