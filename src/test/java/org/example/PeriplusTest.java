@@ -48,9 +48,14 @@ public class PeriplusTest
         homeButton.click();
     }
 
-    public boolean verifyCartItems(){
-        WebElement popUpNotification = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("Notification-Modal")));
+    public HashMap<String, Integer> getCartItems(){
+//        WebElement popUpNotification = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("Notification-Modal")));
 
+//        try {
+//            Thread.sleep(5000);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
 
         if(driver.getCurrentUrl() != CART_URL){
             wait.until(ExpectedConditions.invisibilityOfElementLocated(By.className("preloader")));
@@ -58,13 +63,22 @@ public class PeriplusTest
             cartButton.click();
         }
 
-        List<WebElement> itemsElements = driver.findElements(By.cssSelector(".row.row-cart-product"));
+        // WAIT FOR CART ITEMS TO LOAD
+        try{
+            Thread.sleep(2000);
+        } catch (Exception e){
+            Assert.fail("Error when waiting for the cart items to load.");
+        }
 
-//        Reporter.log("\n\nCart Items Table: " + itemsElements.get(0).getAttribute("outerHTML") + "\n\n");
+        List<WebElement> itemsElements = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
+                By.cssSelector(".row.row-cart-product")
+        ));
+
 
         // SERIALIZE CART ITEMS
         HashMap<String, Integer> cartItemsSerialized = new HashMap<>();
         for (WebElement itemElement : itemsElements){
+            Reporter.log("\n\nItem Element: " + itemElement.getAttribute("outerHTML"));
             String productId = itemElement.findElement(By.xpath("./div[2]/div[2]")).getText().trim();
             int quantity = Integer.parseInt(itemElement.findElement(By.xpath("./div[2]/div[4]/div/input")).getAttribute("value"));
             cartItemsSerialized.put(productId, quantity);
@@ -73,10 +87,7 @@ public class PeriplusTest
         Reporter.log("\n\nCart Items: " + cartItems);
         Reporter.log("\n\nCart Items Serialized: " + cartItemsSerialized);
 
-        if (cartItemsSerialized.equals(cartItems)){
-            return true;
-        }
-        return false;
+        return cartItemsSerialized;
     }
 
     public void removeAllItemFromCart(){
@@ -144,8 +155,8 @@ public class PeriplusTest
         jsExecutor.executeScript(jsFunction);
 
         // VERIFY CART ITEMS
-        boolean cartItemsVerified = verifyCartItems();
-        Assert.assertTrue(cartItemsVerified, "Cart items verification failed.");
+        HashMap cartItemsSerialized = getCartItems();
+        Assert.assertEquals(cartItemsSerialized, cartItems, "Cart items do not match.");
     }
 
     @Test(dependsOnMethods = {"Login"}, priority = 3)
@@ -178,8 +189,8 @@ public class PeriplusTest
         }
 
         // VERIFY CART ITEMS
-        boolean cartItemsVerified = verifyCartItems();
-        Assert.assertTrue(cartItemsVerified, "Cart items verification failed.");
+        HashMap cartItemsSerialized = getCartItems();
+        Assert.assertEquals(cartItemsSerialized, cartItems, "Cart items do not match.");
     }
 
     @Test(dependsOnMethods = {"Login"}, priority = 4)
@@ -215,7 +226,7 @@ public class PeriplusTest
         addToCartButton.click();
 
         // VERIFY CART ITEMS
-        boolean cartItemsVerified = verifyCartItems();
-        Assert.assertTrue(cartItemsVerified, "Cart items verification failed.");
+        HashMap cartItemsSerialized = getCartItems();
+        Assert.assertEquals(cartItemsSerialized, cartItems, "Cart items do not match.");
     }
 }
