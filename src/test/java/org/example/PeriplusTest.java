@@ -36,60 +36,12 @@ public class PeriplusTest
     public void Setup() {
         cartItems = new HashMap<>();
         options = new ChromeOptions();
-//        options.addArguments("--remote-allow-origins=*");
         driver = new ChromeDriver(options);
 
         driver.get(URL);
         wait = new WebDriverWait(driver, Duration.ofSeconds(10));
 
     }
-
-    // UTILITIES METHODS
-    public HashMap<String, Integer> getCartItems(){
-
-        driver.get(CART_URL);
-
-        // WAIT FOR CART ITEMS TO LOAD
-        try{
-            Thread.sleep(5000);
-        } catch (Exception e){
-            Assert.fail("Error when waiting for the cart items to load.");
-        }
-
-        List<WebElement> itemsElements = driver.findElements(By.cssSelector(".row.row-cart-product"));
-
-        // SERIALIZE CART ITEMS
-        HashMap<String, Integer> cartItemsSerialized = new HashMap<>();
-        for (WebElement itemElement : itemsElements){
-            Reporter.log("\n\nItem Element: " + itemElement.getAttribute("outerHTML"));
-            String productId = itemElement.findElement(By.xpath("./div[2]/div[2]")).getText().trim();
-            int quantity = Integer.parseInt(itemElement.findElement(By.xpath("./div[2]/div[4]/div/input")).getAttribute("value"));
-            cartItemsSerialized.put(productId, quantity);
-        }
-        Reporter.log("\n\nCart Items: " + cartItems);
-        Reporter.log("\n\nCart Items Serialized: " + cartItemsSerialized);
-
-        return cartItemsSerialized;
-    }
-
-    public void removeAllItemFromCart(){
-        if(driver.getCurrentUrl() != CART_URL){
-            wait.until(ExpectedConditions.invisibilityOfElementLocated(By.className("preloader")));
-            WebElement cartButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[@id=\"show-your-cart\"]/a")));
-            cartButton.click();
-        }
-
-        while (true){
-            try{
-                wait.until(ExpectedConditions.invisibilityOfElementLocated(By.className("preloader")));
-                List<WebElement> itemsElements = driver.findElements(By.cssSelector(".row.row-cart-product"));
-                itemsElements.get(0).findElement(By.xpath("./div[2]/div[5]/div/a[1]")).click();
-            }catch (Exception e){
-                break;
-            }
-        }
-    }
-
 
 
     @Test(priority = 1)
@@ -127,7 +79,9 @@ public class PeriplusTest
         }
 
         // VERIFY CART ITEMS
-        HashMap cartItemsSerialized = getCartItems();
+        CartPage cartPage = new CartPage(driver, wait);
+        cartPage.navigateToCartPage();
+        HashMap cartItemsSerialized = cartPage.getCartItems();
         Assert.assertEquals(cartItemsSerialized, cartItems, "Cart items do not match.");
     }
 
@@ -154,7 +108,9 @@ public class PeriplusTest
         }
 
         // VERIFY CART ITEMS
-        HashMap cartItemsSerialized = getCartItems();
+        CartPage cartPage = new CartPage(driver, wait);
+        cartPage.navigateToCartPage();
+        HashMap cartItemsSerialized = cartPage.getCartItems();
         Assert.assertEquals(cartItemsSerialized, cartItems, "Cart items do not match.");
     }
 
@@ -188,13 +144,20 @@ public class PeriplusTest
         }
 
         // VERIFY CART ITEMS
-        HashMap cartItemsSerialized = getCartItems();
+        CartPage cartPage = new CartPage(driver, wait);
+        cartPage.navigateToCartPage();
+        HashMap cartItemsSerialized = cartPage.getCartItems();
         Assert.assertEquals(cartItemsSerialized, cartItems, "Cart items do not match.");
     }
 
     @AfterTest
     public void cleanUp(){
-        removeAllItemFromCart();
+        CartPage cartPage = new CartPage(driver, wait);
+        if(driver.getCurrentUrl() != CART_URL){
+            cartPage.navigateToCartPage();
+        }
+
+        cartPage.removeAllItems();
         driver.quit();
     }
 }
