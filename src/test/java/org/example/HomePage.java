@@ -13,7 +13,7 @@ public class HomePage {
 
     private WebDriver driver;
     private WebDriverWait wait;
-    private String URL = "https://www.periplus.com/";
+    private String URL = Config.URL;
 
     // Locators
     private By cartCount = By.id("cart_total");

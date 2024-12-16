@@ -24,13 +24,13 @@ public class PeriplusTest
     private HashMap<String, Integer> cartItems;
 
     // CONSTANTS VALUES
-    private String EMAIL = "naufalindev@gmail.com";
-    private String PASSWORD = "periplus@123";
-    private String URL = "https://www.periplus.com/";
-    private String PRODUCT_URL = "https://www.periplus.com/p/";
-    private String CART_URL = "https://www.periplus.com/checkout/cart";
-    private String ACCOUNT_URL = "https://www.periplus.com/account/Your-Account";
-    private String LOGIN_REDIRECT_URL = "https://www.periplus.com/_index_/index";
+    private String EMAIL = Config.EMAIL;
+    private String PASSWORD = Config.PASSWORD;
+    private String URL = Config.URL;
+    private String PRODUCT_URL = Config.PRODUCT_URL;
+    private String CART_URL = Config.CART_URL;
+    private String ACCOUNT_URL = Config.ACCOUNT_URL;
+    private String LOGIN_REDIRECT_URL = Config.LOGIN_REDIRECT_URL;
 
     @BeforeTest
     public void Setup() {

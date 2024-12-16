@@ -14,7 +14,7 @@ import java.util.List;
 public class CartPage {
     private WebDriver driver;
     private WebDriverWait wait;
-    private String URL = "https://www.periplus.com/checkout/cart";
+    private String URL = Config.CART_URL;
 
     // Locators
     private By cartItems = By.cssSelector(".row.row-cart-product");

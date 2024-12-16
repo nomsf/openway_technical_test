@@ -8,7 +8,7 @@ public class LoginPage {
 
     private WebDriver driver;
     private WebDriverWait wait;
-    private String LOGIN_URL = "https://www.periplus.com/account/Login";
+    private String LOGIN_URL = Config.LOGIN_URL;
 
     // Locators
     private By emailField = By.xpath("//*[@id=\"login\"]/div/table/tbody/tr[2]/td/input");

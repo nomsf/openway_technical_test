@@ -9,7 +9,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 public class ProductPage {
     private WebDriver driver;
     private WebDriverWait wait;
-    private String URL = "https://www.periplus.com/p/";
+    private String URL = Config.PRODUCT_URL;
 
     // Locators
     private By itemQtyInputField = By.xpath("/html/body/div[3]/div[1]/div/div/div[3]/div[1]/div[2]/input");
