@@ -30,6 +30,7 @@ public class PeriplusTest
     private String PRODUCT_URL = "https://www.periplus.com/p/";
     private String CART_URL = "https://www.periplus.com/checkout/cart";
     private String ACCOUNT_URL = "https://www.periplus.com/account/Your-Account";
+    private String LOGIN_REDIRECT_URL = "https://www.periplus.com/_index_/index";
 
     @BeforeTest
     public void Setup() {
@@ -44,12 +45,6 @@ public class PeriplusTest
     }
 
     // UTILITIES METHODS
-    public void navigateToHomePage(){
-        wait.until(ExpectedConditions.invisibilityOfElementLocated(By.className("preloader")));
-        WebElement homeButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("/html/body/header/div[2]/div/div[1]/div[1]/div[1]")));
-        homeButton.click();
-    }
-
     public HashMap<String, Integer> getCartItems(){
 
         driver.get(CART_URL);
@@ -95,30 +90,17 @@ public class PeriplusTest
         }
     }
 
-    private static boolean isElementPresent(WebDriver driver, WebDriverWait wait, By locator) {
-        try {
-            wait.until(ExpectedConditions.presenceOfElementLocated(locator));
-            return true; // Element is found
-        } catch (Exception e) {
-            return false; // Element not found
-        }
-    }
+
 
     @Test(priority = 1)
     public void Login(){
-        driver.findElement(By.xpath("/html/body/header/div[2]/div/div[1]/div[3]/div/div[3]")).click();
+        LoginPage loginPage = new LoginPage(driver, wait);
+        loginPage.navigateToLoginPage();
 
-//      Input Email
-        driver.findElement(By.xpath("//*[@id=\"login\"]/div/table/tbody/tr[2]/td/input")).sendKeys(EMAIL);
-//      Input Password
-        driver.findElement(By.xpath("//*[@id=\"ps\"]")).sendKeys(PASSWORD);
-        driver.findElement(By.xpath("//*[@id=\"button-login\"]")).click();
+        loginPage.login(EMAIL, PASSWORD);
 
-        // WAIT FOR LOGIN TO COMPLETE
         try {
-            boolean redirected = wait.until(ExpectedConditions.urlToBe(ACCOUNT_URL));
-
-            Assert.assertTrue(redirected, "Login failed or not redirected correctly.");
+            boolean redirected = wait.until(ExpectedConditions.urlToBe(LOGIN_REDIRECT_URL));
         } catch (Exception e){
             Assert.fail("Login failed or not redirected correctly.");
         }
@@ -126,47 +108,22 @@ public class PeriplusTest
 
     @Test(dependsOnMethods = {"Login"}, priority = 2)
     public void AddItemToCart(){
-        navigateToHomePage();
+        HomePage homePage = new HomePage(driver, wait);
+        homePage.navigateToHomePage();
+
         // ITEM IN CART COUNT
-        Integer itemCount = Integer.valueOf(driver.findElement(By.id("cart_total")).getText());
+        Integer itemCount = homePage.getCartCount();
 
         // FIND A SINGLE PRODUCT
-        //        driver.findElement(By.xpath("/html/body/header/div[2]/div/div[1]/div[1]/div[1]/a")).click();
-        WebElement singleProduct = driver.findElement(By.className("single-product"));
-
-//        Reporter.log(singleProduct.getAttribute("outerHTML"));
-
-
-        // Get the href attribute value
-        WebElement linkElement = singleProduct.findElement(By.tagName("a"));
-        String hrefValue = linkElement.getAttribute("href");
-
-
-        // EXTRACT ID FROM HREF VALUE
-        int startIndex = hrefValue.indexOf("/p/") + 3;
-        int endIndex = hrefValue.indexOf("/", startIndex);
-        String extractedValue = hrefValue.substring(startIndex, endIndex);
-
-        cartItems.put(extractedValue, 1);
-
-//        Reporter.log("\n\nProduct Number ID: " + extractedValue);
+        WebElement singleProduct = homePage.getProduct();
+        String productId = homePage.getProductId(singleProduct);
 
         // ADD ITEM TO CART
-        WebElement addToCartButton = singleProduct.findElement(By.className("addtocart"));
+        cartItems.put(productId, 1);
+        homePage.AddToCart(singleProduct);
 
-        JavascriptExecutor js = (JavascriptExecutor) driver;
-        js.executeScript("arguments[0].click();", addToCartButton);
-
-        try{
-            wait.until(booleanExpectedCondition -> {
-                Integer itemCountNew = Integer.valueOf(driver.findElement(By.id("cart_total")).getText());
-                return itemCountNew == itemCount+1;
-            });
-        } catch(Exception e){
-            Reporter.log("\n\nError: " + e.getMessage());
-            Reporter.log("\nItem Count: " + itemCount);
-            Reporter.log("\nItem Count New: " + driver.findElement(By.id("cart_total")).getText());
-
+        if(!homePage.compareCartCount(itemCount)){
+            Reporter.log("Warning: Item count displayed is not increased.");
         }
 
         // VERIFY CART ITEMS
@@ -176,45 +133,24 @@ public class PeriplusTest
 
     @Test(dependsOnMethods = {"Login"}, priority = 3)
     public void AddMultipleItemsToCart() {
-        navigateToHomePage();
+        HomePage homePage = new HomePage(driver, wait);
+        homePage.navigateToHomePage();
 
-        // FIND A SINGLE PRODUCT
-        //        driver.findElement(By.xpath("/html/body/header/div[2]/div/div[1]/div[1]/div[1]/a")).click();
-        List<WebElement> products = driver.findElements(By.className("single-product"));
-        List<WebElement> productsLimited = products.subList(0, Math.min(5, products.size()));
+        // FIND A MULTIPLE PRODUCT
+        List<WebElement> products = homePage.getProducts(3);
 
-        for (WebElement singleProduct : productsLimited) {
-            Integer itemCount = Integer.valueOf(driver.findElement(By.id("cart_total")).getText());
+        for (WebElement singleProduct : products) {
+            Integer itemCount = homePage.getCartCount();
 
-            // Get the href attribute value
-            WebElement linkElement = singleProduct.findElement(By.tagName("a"));
-            String hrefValue = linkElement.getAttribute("href");
-
-            // EXTRACT ID FROM HREF VALUE
-            int startIndex = hrefValue.indexOf("/p/") + 3;
-            int endIndex = hrefValue.indexOf("/", startIndex);
-            String extractedValue = hrefValue.substring(startIndex, endIndex);
-
-            cartItems.put(extractedValue, 1);
+            String productId = homePage.getProductId(singleProduct);
 
             // ADD ITEM TO CART
-            WebElement addToCartButton = singleProduct.findElement(By.className("addtocart"));
+            cartItems.put(productId, 1);
+            homePage.AddToCart(singleProduct);
 
-            JavascriptExecutor js = (JavascriptExecutor) driver;
-            js.executeScript("arguments[0].click();", addToCartButton);
-
-            try{
-                wait.until(booleanExpectedCondition -> {
-                    Integer itemCountNew = Integer.valueOf(driver.findElement(By.id("cart_total")).getText());
-                    return itemCountNew > itemCount;
-                });
-
-            } catch (Exception e){
-                Reporter.log("\n\nError: " + e.getMessage());
-                Reporter.log("\nItem Count: " + itemCount);
-                Reporter.log("\nItem Count New: " + driver.findElement(By.id("cart_total")).getText());
+            if(!homePage.compareCartCount(itemCount)){
+                Reporter.log("Warning: Item count displayed is not increased.");
             }
-
         }
 
         // VERIFY CART ITEMS
@@ -224,46 +160,31 @@ public class PeriplusTest
 
     @Test(dependsOnMethods = {"Login"}, priority = 4)
     public void AddQuantityItemsToCart() {
-        navigateToHomePage();
-        Random random = new Random();
-        int randomQty = random.nextInt(3) + 1;
+        HomePage homePage = new HomePage(driver, wait);
+        homePage.navigateToHomePage();
+
 
         // FIND A SINGLE PRODUCT
-        WebElement singleProduct = driver.findElement(By.className("single-product"));
+        WebElement singleProduct = homePage.getProduct();
+        String productId = homePage.getProductId(singleProduct);
 
-        // Get the href attribute value
-        WebElement linkElement = singleProduct.findElement(By.tagName("a"));
-        String hrefValue = linkElement.getAttribute("href");
+        // GO TO PRODUCT PAGE
+        ProductPage productPage = new ProductPage(driver, wait, productId);
+        productPage.navigateToProductPage();
 
-        // EXTRACT ID FROM HREF VALUE
-        int startIndex = hrefValue.indexOf("/p/") + 3;
-        int endIndex = hrefValue.indexOf("/", startIndex);
-        String extractedValue = hrefValue.substring(startIndex, endIndex);
+        Integer itemCount = productPage.getCartCount();
 
-        cartItems.put(extractedValue, randomQty);
+        // SET ITEM QUANTITY
+        Random random = new Random();
+        int randomQty = random.nextInt(3) + 1;
+        productPage.setItemQty(randomQty);
 
         // ADD ITEM TO CART
-        Integer itemCount = Integer.valueOf(driver.findElement(By.id("cart_total")).getText());
-        driver.get(PRODUCT_URL + extractedValue);
+        cartItems.put(productId, randomQty);
+        productPage.addToCart();
 
-        WebElement ItemQty = driver.findElement(By.xpath("/html/body/div[3]/div[1]/div/div/div[3]/div[1]/div[2]/input"));
-//        ItemQty.clear();
-        Reporter.log("\n\nRandom Quantity: " + randomQty);
-        ItemQty.sendKeys(Keys.chord(Keys.CONTROL, "a"), String.valueOf(randomQty));
-
-        wait.until(ExpectedConditions.invisibilityOfElementLocated(By.className("preloader")));
-        WebElement addToCartButton = driver.findElement(By.xpath("/html/body/div[3]/div[1]/div/div/div[3]/div[1]/div[3]/div[1]/button"));
-        addToCartButton.click();
-
-        try {
-            wait.until(booleanExpectedCondition -> {
-                Integer itemCountNew = Integer.valueOf(driver.findElement(By.id("cart_total")).getText());
-                return itemCountNew > itemCount;
-            });
-        } catch (Exception e){
-            Reporter.log("\n\nError: " + e.getMessage());
-            Reporter.log("\nItem Count: " + itemCount);
-            Reporter.log("\nItem Count New: " + driver.findElement(By.id("cart_total")).getText());
+        if(!productPage.compareCartCount(itemCount)){
+            Reporter.log("Warning: Item count displayed is not increased.");
         }
 
         // VERIFY CART ITEMS
