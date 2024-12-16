@@ -29,6 +29,7 @@ public class PeriplusTest
     private String URL = "https://www.periplus.com/";
     private String PRODUCT_URL = "https://www.periplus.com/p/";
     private String CART_URL = "https://www.periplus.com/checkout/cart";
+    private String ACCOUNT_URL = "https://www.periplus.com/account/Your-Account";
 
     @BeforeTest
     public void Setup() {
@@ -94,6 +95,15 @@ public class PeriplusTest
         }
     }
 
+    private static boolean isElementPresent(WebDriver driver, WebDriverWait wait, By locator) {
+        try {
+            wait.until(ExpectedConditions.presenceOfElementLocated(locator));
+            return true; // Element is found
+        } catch (Exception e) {
+            return false; // Element not found
+        }
+    }
+
     @Test(priority = 1)
     public void Login(){
         driver.findElement(By.xpath("/html/body/header/div[2]/div/div[1]/div[3]/div/div[3]")).click();
@@ -104,6 +114,14 @@ public class PeriplusTest
         driver.findElement(By.xpath("//*[@id=\"ps\"]")).sendKeys(PASSWORD);
         driver.findElement(By.xpath("//*[@id=\"button-login\"]")).click();
 
+        // WAIT FOR LOGIN TO COMPLETE
+        try {
+            boolean redirected = wait.until(ExpectedConditions.urlToBe(ACCOUNT_URL));
+
+            Assert.assertTrue(redirected, "Login failed or not redirected correctly.");
+        } catch (Exception e){
+            Assert.fail("Login failed or not redirected correctly.");
+        }
     }
 
     @Test(dependsOnMethods = {"Login"}, priority = 2)
@@ -197,11 +215,6 @@ public class PeriplusTest
                 Reporter.log("\nItem Count New: " + driver.findElement(By.id("cart_total")).getText());
             }
 
-//            String jsFunction = addToCartButton.getAttribute("onclick");
-////            JavascriptExecutor jsExecutor = (JavascriptExecutor) driver;
-//
-//            wait.until(webDriver -> ((JavascriptExecutor) webDriver)
-//                    .executeScript(jsFunction).equals("complete"));
         }
 
         // VERIFY CART ITEMS
