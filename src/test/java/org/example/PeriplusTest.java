@@ -7,6 +7,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.testng.Assert;
 import org.testng.Reporter;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
@@ -49,31 +50,17 @@ public class PeriplusTest
     }
 
     public HashMap<String, Integer> getCartItems(){
-//        WebElement popUpNotification = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("Notification-Modal")));
 
-//        try {
-//            Thread.sleep(5000);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-
-        if(driver.getCurrentUrl() != CART_URL){
-            wait.until(ExpectedConditions.invisibilityOfElementLocated(By.className("preloader")));
-            WebElement cartButton = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//*[@id=\"show-your-cart\"]/a")));
-            cartButton.click();
-        }
+        driver.get(CART_URL);
 
         // WAIT FOR CART ITEMS TO LOAD
         try{
-            Thread.sleep(2000);
+            Thread.sleep(5000);
         } catch (Exception e){
             Assert.fail("Error when waiting for the cart items to load.");
         }
 
-        List<WebElement> itemsElements = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
-                By.cssSelector(".row.row-cart-product")
-        ));
-
+        List<WebElement> itemsElements = driver.findElements(By.cssSelector(".row.row-cart-product"));
 
         // SERIALIZE CART ITEMS
         HashMap<String, Integer> cartItemsSerialized = new HashMap<>();
@@ -82,7 +69,6 @@ public class PeriplusTest
             String productId = itemElement.findElement(By.xpath("./div[2]/div[2]")).getText().trim();
             int quantity = Integer.parseInt(itemElement.findElement(By.xpath("./div[2]/div[4]/div/input")).getAttribute("value"));
             cartItemsSerialized.put(productId, quantity);
-
         }
         Reporter.log("\n\nCart Items: " + cartItems);
         Reporter.log("\n\nCart Items Serialized: " + cartItemsSerialized);
@@ -118,12 +104,14 @@ public class PeriplusTest
         driver.findElement(By.xpath("//*[@id=\"ps\"]")).sendKeys(PASSWORD);
         driver.findElement(By.xpath("//*[@id=\"button-login\"]")).click();
 
-        removeAllItemFromCart();
     }
 
     @Test(dependsOnMethods = {"Login"}, priority = 2)
     public void AddItemToCart(){
         navigateToHomePage();
+        // ITEM IN CART COUNT
+        Integer itemCount = Integer.valueOf(driver.findElement(By.id("cart_total")).getText());
+
         // FIND A SINGLE PRODUCT
         //        driver.findElement(By.xpath("/html/body/header/div[2]/div/div[1]/div[1]/div[1]/a")).click();
         WebElement singleProduct = driver.findElement(By.className("single-product"));
@@ -148,11 +136,20 @@ public class PeriplusTest
         // ADD ITEM TO CART
         WebElement addToCartButton = singleProduct.findElement(By.className("addtocart"));
 
-//        Reporter.log("\n\nAdd to Cart Button: " + addToCartButton.getAttribute("outerHTML"));
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        js.executeScript("arguments[0].click();", addToCartButton);
 
-        String jsFunction = addToCartButton.getAttribute("onclick");
-        JavascriptExecutor jsExecutor = (JavascriptExecutor) driver;
-        jsExecutor.executeScript(jsFunction);
+        try{
+            wait.until(booleanExpectedCondition -> {
+                Integer itemCountNew = Integer.valueOf(driver.findElement(By.id("cart_total")).getText());
+                return itemCountNew == itemCount+1;
+            });
+        } catch(Exception e){
+            Reporter.log("\n\nError: " + e.getMessage());
+            Reporter.log("\nItem Count: " + itemCount);
+            Reporter.log("\nItem Count New: " + driver.findElement(By.id("cart_total")).getText());
+
+        }
 
         // VERIFY CART ITEMS
         HashMap cartItemsSerialized = getCartItems();
@@ -169,6 +166,8 @@ public class PeriplusTest
         List<WebElement> productsLimited = products.subList(0, Math.min(5, products.size()));
 
         for (WebElement singleProduct : productsLimited) {
+            Integer itemCount = Integer.valueOf(driver.findElement(By.id("cart_total")).getText());
+
             // Get the href attribute value
             WebElement linkElement = singleProduct.findElement(By.tagName("a"));
             String hrefValue = linkElement.getAttribute("href");
@@ -183,9 +182,26 @@ public class PeriplusTest
             // ADD ITEM TO CART
             WebElement addToCartButton = singleProduct.findElement(By.className("addtocart"));
 
-            String jsFunction = addToCartButton.getAttribute("onclick");
-            JavascriptExecutor jsExecutor = (JavascriptExecutor) driver;
-            jsExecutor.executeScript(jsFunction);
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            js.executeScript("arguments[0].click();", addToCartButton);
+
+            try{
+                wait.until(booleanExpectedCondition -> {
+                    Integer itemCountNew = Integer.valueOf(driver.findElement(By.id("cart_total")).getText());
+                    return itemCountNew > itemCount;
+                });
+
+            } catch (Exception e){
+                Reporter.log("\n\nError: " + e.getMessage());
+                Reporter.log("\nItem Count: " + itemCount);
+                Reporter.log("\nItem Count New: " + driver.findElement(By.id("cart_total")).getText());
+            }
+
+//            String jsFunction = addToCartButton.getAttribute("onclick");
+////            JavascriptExecutor jsExecutor = (JavascriptExecutor) driver;
+//
+//            wait.until(webDriver -> ((JavascriptExecutor) webDriver)
+//                    .executeScript(jsFunction).equals("complete"));
         }
 
         // VERIFY CART ITEMS
@@ -214,6 +230,7 @@ public class PeriplusTest
         cartItems.put(extractedValue, randomQty);
 
         // ADD ITEM TO CART
+        Integer itemCount = Integer.valueOf(driver.findElement(By.id("cart_total")).getText());
         driver.get(PRODUCT_URL + extractedValue);
 
         WebElement ItemQty = driver.findElement(By.xpath("/html/body/div[3]/div[1]/div/div/div[3]/div[1]/div[2]/input"));
@@ -225,8 +242,25 @@ public class PeriplusTest
         WebElement addToCartButton = driver.findElement(By.xpath("/html/body/div[3]/div[1]/div/div/div[3]/div[1]/div[3]/div[1]/button"));
         addToCartButton.click();
 
+        try {
+            wait.until(booleanExpectedCondition -> {
+                Integer itemCountNew = Integer.valueOf(driver.findElement(By.id("cart_total")).getText());
+                return itemCountNew > itemCount;
+            });
+        } catch (Exception e){
+            Reporter.log("\n\nError: " + e.getMessage());
+            Reporter.log("\nItem Count: " + itemCount);
+            Reporter.log("\nItem Count New: " + driver.findElement(By.id("cart_total")).getText());
+        }
+
         // VERIFY CART ITEMS
         HashMap cartItemsSerialized = getCartItems();
         Assert.assertEquals(cartItemsSerialized, cartItems, "Cart items do not match.");
+    }
+
+    @AfterTest
+    public void cleanUp(){
+        removeAllItemFromCart();
+        driver.quit();
     }
 }
