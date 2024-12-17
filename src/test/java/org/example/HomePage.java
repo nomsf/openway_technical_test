@@ -7,6 +7,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class HomePage {
@@ -51,6 +52,14 @@ public class HomePage {
         int endIndex = hrefValue.indexOf("/", startIndex);
 
         return hrefValue.substring(startIndex, endIndex);
+    }
+
+    public List<String> getProductIds(List<WebElement> products) {
+        List<String> productIds = new ArrayList<>();
+        for (WebElement product : products) {
+            productIds.add(getProductId(product));
+        }
+        return productIds;
     }
 
     public void AddToCart(WebElement product) {

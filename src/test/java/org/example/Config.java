@@ -8,6 +8,7 @@ public class Config {
     // Environment Variables
     public static final String EMAIL = dotenv.get("EMAIL");
     public static final String PASSWORD = dotenv.get("PASSWORD");
+    public static final String MAX_QTY = dotenv.get("MAX_QTY");
     public static final String URL = dotenv.get("URL");
     public static final String PRODUCT_URL = dotenv.get("PRODUCT_URL");
     public static final String CART_URL = dotenv.get("CART_URL");
